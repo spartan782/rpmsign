@@ -76,7 +76,7 @@ from ansible.module_utiles.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            passphrase=dict(type='str', required=False, default=None),
+            passphrase=dict(type='str', required=False, default=None, no_log=True),
             key=dict(type='str', required=False, default=None),
             packages=dict(type='list', required=True),
             state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
@@ -95,7 +95,7 @@ def main():
     }
 
     if module.params['state'] == "present":
-        if module.params['passphrase'] or module.params['key']:
+        if not module.params['passphrase'] and not module.params['key']:
             module.fail_json(rc=1, msg='Error: Both passphrase and key are required when signing an rpm')
         else:
             for package in module.params['packages']:
@@ -112,7 +112,8 @@ def main():
                     results['changed'] = True
 
                 # need to be able to hook the c code to dectect the warning
-                results['results'].append('{} skipped, already signed')
+                if False:
+                    results['results'].append('{} skipped, already signed'.format(package))
             module.exit_json(
                 changed=results['changed'],
                 results=results['results'],
