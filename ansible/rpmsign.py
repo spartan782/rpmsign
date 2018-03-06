@@ -18,20 +18,21 @@ options:
     description:
       - Pass phrase to use with key
     required: false
-    default = null
+    default: null
   key:
     description:
       - Name of the key that should be used for signing
     required: false
     default = null
-  packages:
+  rpms:
     description:
-      - List of packages to sign using key
+      - List of full path rpms to sign using key
       required: True
-  directory:
+  macros:
     description:
-      - Full path to directory containing packages needing signed
-      required: True
+      - Dictionary of macros to define
+      required: False
+      default: null
   state:
     description:
       - Present adds a signature, absent will remove a signature
@@ -55,6 +56,10 @@ EXAMPLES = '''
       - "secret"
     key:
       - "key name"
+    marcos:
+      _signature: gpg
+      _gpg_name: gpg key name
+      
 # Remove signature from packages
 - rpmsign:
     directory:
@@ -78,9 +83,9 @@ def main():
         argument_spec=dict(
             passphrase=dict(type='str', required=False, default=None, no_log=True),
             key=dict(type='str', required=False, default=None),
-            packages=dict(type='list', required=True),
+            rpms=dict(type='list', required=True),
             state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
-            directory=dict(type='str', required=True)
+            macros=dict(type='dict', required=False, default=None)
         ),
         supports_check_mode=True
     )
@@ -98,12 +103,13 @@ def main():
         if not module.params['passphrase'] and not module.params['key']:
             module.fail_json(rc=1, msg='Error: Both passphrase and key are required when signing an rpm')
         else:
+            if module.params['macros']:
+                for macro, value in module.params['macros'].items():
+                    rpm.addMacro(macro, value)
             for package in module.params['packages']:
                 rpm.addSign(
-                    '{dir}/{package}'.format(
-                        dir=module.params['directory'],
-                        package=package
-                    ), module.params['passphrase'], module.params['key']
+                    '{rpm}'.format(rpm=package),
+                    module.params['passphrase'], module.params['key']
                 )
                 # need to be able to hook the c code for the warning to test if actual change occurred
                 results['changes'].append('{}'.format(package))
@@ -120,8 +126,8 @@ def main():
                 changes=dict(signed=results['changes'])
             )
     else:
-        for package in module.params['packages']:
-            rpm.delSign('{dir}/{package}'.format(dir=module.params['directory'], package=package))
+        for package in module.params['rpms']:
+            rpm.delSign('{rpm}'.format(rpm=package))
             results['changes'].append('{}'.format(package))
             results['results'].append('removed signature from {}'.format(package))
             if not results['changed']:
