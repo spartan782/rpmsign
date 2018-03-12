@@ -69,6 +69,7 @@ EXAMPLES = '''
     state:
       - absent
 '''
+import os
 
 try:
     import rpm
@@ -107,18 +108,27 @@ def main():
                 for macro, value in module.params['macros'].items():
                     rpm.addMacro(macro, value)
             for package in module.params['packages']:
-                rpm.addSign(
+                r, w = os.pipe()
+                w = os.fdopen(w, 'w')
+                rpm.setLogFile(w)
+                result = rpm.addSign(
                     '{rpm}'.format(rpm=package),
                     module.params['passphrase'], module.params['key']
                 )
-                # need to be able to hook the c code for the warning to test if actual change occurred
-                results['changes'].append('{}'.format(package))
-                results['results'].append('{} was signed'.format(package))
-                if not results['changed']:
-                    results['changed'] = True
-
-                # need to be able to hook the c code to dectect the warning
-                if False:
+                w.close()
+                r = os.fdopen(r)
+                msg = r.readline()
+                r.close()
+                
+                if not result:
+                    module.fail_json(rc=1, msg='Error: Failed to sign {rpm}'.format(package))
+                
+                if not msg:
+                    results['changes'].append('{}'.format(package))
+                    results['results'].append('{} was signed'.format(package))
+                    if not results['changed']:
+                        results['changed'] = True
+                else:
                     results['results'].append('{} skipped, already signed'.format(package))
             module.exit_json(
                 changed=results['changed'],
