@@ -47,9 +47,7 @@ author: "Johnathon Hall"
 EXAMPLES = '''
 # Sign packages
 - rpmsign:
-    directory:
-      - /tmp/packages/
-    packages:
+    rpms:
       - package-version.rpm
     passphrase:
       - "secret"
