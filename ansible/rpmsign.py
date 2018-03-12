@@ -63,7 +63,7 @@ EXAMPLES = '''
 - rpmsign:
     directory:
       - /tmp/packages/
-    packages:
+    rpms:
       - package-version.rpm
     state:
       - absent
@@ -77,7 +77,7 @@ try:
 except ImportError:
     HAS_RPM = False
 
-from ansible.module_utiles.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 
 def sign(module):
     """Add signature to packages"""
@@ -93,7 +93,7 @@ def sign(module):
         if module.params['macros']:
             for macro, value in module.params['macros'].items():
                 rpm.addMacro(macro, value)
-        for package in module.params['packages']:
+        for package in module.params['rpms']:
             pyread, cwrite = os.pipe()
             write = os.fdopen(cwrite, 'w')
             rpm.setLogFile(cwrite)
