@@ -105,7 +105,8 @@ def sign(module):
             pyread.close()
 
             if not result:
-                module.fail_json(rc=1, msg='Error: Failed to sign {rpm}'.format(rpm=package))
+                module.fail_json(rc=1, msg='Error: Failed to sign {rpm}. {msg}'.format(
+                  rpm=package, msg=msg))
 
             if not msg:
                 results['changes'].append('{}'.format(package))
