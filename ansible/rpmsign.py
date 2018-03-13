@@ -40,7 +40,7 @@ options:
     default: "present"
 # informational: requirements for nodes
 requirements:
-    - rpm 
+    - rpm
 author: "Johnathon Hall"
 '''
 
@@ -56,7 +56,6 @@ EXAMPLES = '''
     marcos:
       _signature: gpg
       _gpg_name: gpg key name
-
 # Remove signature from packages
 - rpmsign:
     directory:
@@ -105,8 +104,7 @@ def sign(module):
             pyread.close()
 
             if not result:
-                module.fail_json(rc=1, msg='Error: Failed to sign {rpm}. {msg}'.format(
-                  rpm=package, msg=msg))
+                module.fail_json(rc=1, msg='Error: Failed to sign {rpm}, {msg}'.format(rpm=package, msg=msg))
 
             if not msg:
                 results['changes'].append('{}'.format(package))
@@ -165,7 +163,6 @@ def main():
         sign(module)
     else:
         del_sign(module)
-
 
 if __name__ == "__main__":
     main()
